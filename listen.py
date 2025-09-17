@@ -25,7 +25,7 @@ RIGHT_ENCODER = 16
 
 # PID Constants (default values, will be overridden by client)
 use_PID = 0
-KP, Ki, KD = 0, 0, 0
+KP_R, KI_R, KD_R, KP_T, KI_T, KD_T = 0, 0, 0, 0, 0, 0
 MAX_CORRECTION = 30  # Maximum PWM correction value
 
 # Global variables
@@ -155,7 +155,7 @@ def apply_min_threshold(pwm_value, min_threshold):
 
 def pid_control():
     # Only applies for forward/backward, not turning
-    global left_pwm, right_pwm, left_count, right_count, use_PID, KP, KI, KD, prev_movement, current_movement
+    global left_pwm, right_pwm, left_count, right_count, use_PID, KP_R, KI_R, KD_R, KP_T, KI_T, KD_T, prev_movement, current_movement
     
     integral = 0
     last_error = 0
@@ -186,31 +186,35 @@ def pid_control():
             if current_movement != 'stop':
                 
                 error = left_count - right_count
-                proportional = KP * error
-                integral += KI * error * dt
-                integral = max(-MAX_CORRECTION, min(integral, MAX_CORRECTION))  # Anti-windup
-                derivative = KD * (error - last_error) / dt if dt > 0 else 0
+                if current_movement == 'forward' or current_movement == 'backward':
+                    proportional = KP_T * error
+                    integral += KI_T * error * dt
+                    integral = max(-MAX_CORRECTION, min(integral, MAX_CORRECTION))  # Anti-windup
+                    derivative = KD_T * (error - last_error) / dt if dt > 0 else 0
+                elif current_movement == 'turn_left' or current_movement == 'turn_right':
+                    proportional = KP_R * error
+                    integral += KI_R * error * dt
+                    integral = max(-MAX_CORRECTION, min(integral, MAX_CORRECTION))  # Anti-windup
+                    derivative = KD_R * (error - last_error) / dt if dt > 0 else 0
                 correction = proportional + integral + derivative
                 correction = max(-MAX_CORRECTION, min(correction, MAX_CORRECTION))
                 last_error = error
                             
-                if current_movement == 'forward' or current_movement == 'backward':
-                    if current_movement == 'backward':
-                        correction = -correction
-
+                if current_movement == 'forward':
                     target_left_pwm = left_pwm - correction
                     target_right_pwm = right_pwm + correction 
-
+                elif current_movement == 'backward':
+                    target_left_pwm = left_pwm + correction
+                    target_right_pwm = right_pwm - correction 
                 elif current_movement == 'turn_left':  
                     target_left_pwm = left_pwm + correction
                     target_right_pwm = right_pwm + correction 
-
                 elif current_movement == 'turn_right':  
                     target_left_pwm = left_pwm - correction
-                    target_right_pwm = right_pwm - correction 
+                    target_right_pwm = right_pwm - correction
 
             else:
-                # Reset when stopped or turning
+                # Reset when stopped 
                 integral = 0
                 last_error = 0
                 reset_encoder()
@@ -334,7 +338,7 @@ def camera_stream_server():
 
 
 def pid_config_server():
-    global use_PID, KP, KI, KD
+    global use_PID, KP_R, KI_R, KD_R, KP_T, KI_T, KD_T
     
     # Create socket for receiving PID configuration
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -352,8 +356,8 @@ def pid_config_server():
                 # Receive PID constants (4 floats)
                 data = client_socket.recv(16)
                 if data and len(data) == 16:
-                    use_PID, KP, KI, KD = struct.unpack("!ffff", data)
-                    if use_PID: print(f"Updated PID constants: KP={KP}, KI={KI}, KD={KD}")
+                    use_PID, KP_R, KI_R, KD_R, KP_T, KI_T, KD_T = struct.unpack("!ffff", data)
+                    if use_PID: print(f"Updated PID constants: Translate: KP={KP_T}, KI={KI_T}, KD={KD_T}, Rotate: KP={KP_R}, KI={KI_R}, KD={KD_R},")
                     else: print("The robot is not using PID.")
                     
                     # Send acknowledgment (1 for success)
