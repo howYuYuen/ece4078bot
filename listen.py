@@ -175,14 +175,15 @@ def pid_control():
         prev_movement = current_movement
         if (left_pwm > 0 and right_pwm > 0): current_movement = 'forward'
         elif (left_pwm < 0 and right_pwm < 0): current_movement = 'backward'
+        elif (left_pwm < 0 and right_pwm > 0): current_movement = 'turn_left'
+        elif (left_pwm > 0 and right_pwm < 0): current_movement = 'turn_right'
         elif (left_pwm == 0 and right_pwm == 0): current_movement = 'stop'
-        else: current_movement = 'turn'
         
         if not use_PID:
             target_left_pwm = left_pwm
             target_right_pwm = right_pwm
         else:
-            if current_movement == 'forward' or current_movement == 'backward' or current_movement == 'turn':
+            if current_movement != 'stop':
                 
                 error = left_count - right_count
                 proportional = KP * error
