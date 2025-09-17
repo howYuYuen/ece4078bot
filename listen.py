@@ -197,7 +197,14 @@ def pid_control():
                     correction = -correction
 
                 target_left_pwm = left_pwm - correction
-                target_right_pwm = right_pwm + correction               
+                target_right_pwm = right_pwm + correction   
+
+            elif current_movement == 'turn':
+                integral = 0
+                last_error = 0
+                target_left_pwm = left_pwm
+                target_right_pwm = right_pwm
+
             else:
                 # Reset when stopped or turning
                 integral = 0
