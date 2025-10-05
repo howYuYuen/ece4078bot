@@ -185,7 +185,7 @@ def pid_control():
         else:
             if current_movement != 'stop':
                 
-                error = left_count - right_count
+                error = right_count - left_count
                 if current_movement == 'forward' or current_movement == 'backward':
                     proportional = KP_T * error
                     integral += KI_T * error * dt
@@ -200,18 +200,21 @@ def pid_control():
                 correction = max(-MAX_CORRECTION, min(correction, MAX_CORRECTION))
                 last_error = error
                             
-                if current_movement == 'forward':
-                    target_left_pwm = left_pwm - correction
-                    target_right_pwm = right_pwm + correction 
-                elif current_movement == 'backward':
-                    target_left_pwm = left_pwm + correction
-                    target_right_pwm = right_pwm - correction 
-                elif current_movement == 'turn_left':  
-                    target_left_pwm = left_pwm + correction
-                    target_right_pwm = right_pwm + correction 
-                elif current_movement == 'turn_right':  
-                    target_left_pwm = left_pwm - correction
-                    target_right_pwm = right_pwm - correction
+                # if current_movement == 'forward':
+                #     target_left_pwm = left_pwm + correction
+                #     target_right_pwm = right_pwm - correction 
+                # elif current_movement == 'backward':
+                #     target_left_pwm = left_pwm - correction
+                #     target_right_pwm = right_pwm + correction 
+                # elif current_movement == 'turn_left':  
+                #     target_left_pwm = left_pwm + correction
+                #     target_right_pwm = right_pwm - correction 
+                # elif current_movement == 'turn_right':  
+                #     target_left_pwm = left_pwm - correction
+                #     target_right_pwm = right_pwm - correction
+            
+                target_left_pwm = left_pwm + correction
+                target_right_pwm = right_pwm - correction 
 
             else:
                 # Reset when stopped 
