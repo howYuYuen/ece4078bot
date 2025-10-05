@@ -207,11 +207,11 @@ def pid_control():
                     target_left_pwm = left_pwm - correction
                     target_right_pwm = right_pwm + correction 
                 elif current_movement == 'turn_left':  
-                    target_left_pwm = left_pwm + correction
+                    target_left_pwm = left_pwm - correction
                     target_right_pwm = right_pwm - correction 
                 elif current_movement == 'turn_right':  
-                    target_left_pwm = left_pwm - correction
-                    target_right_pwm = right_pwm - correction
+                    target_left_pwm = left_pwm + correction
+                    target_right_pwm = right_pwm + correction
             
 
             else:
